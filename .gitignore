@@ -1,8 +1,9 @@
 # python Cache
 .pyc
 
-# out file for parser
-.out
+# ply cache files
+parser.out
+parsetab.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
