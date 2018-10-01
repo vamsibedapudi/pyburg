@@ -35,7 +35,7 @@ def getmatchedkids(p, rule):
 
 	kids = []
 	ruleno = rule.number
-	assert p, PANIC("Bad Node argument tree in kids\n");
+	assert p, "Bad Node argument tree in kids\n"
 	if ruleno is None: assert 0, "No rulenumber associated with rule"
 
 	elif(

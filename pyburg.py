@@ -425,12 +425,12 @@ def emitcase(p):
 	for r in reversed(p.rules):
 		if r.rhs.nterms <= 1:
 			printf("~3if (~1# ~R\n", r);
-			printf("~4True # No checks for any terminal\n")
+			printf("~4True # No terminals\n")
 			printf("~3):\n~4c = ");
 		else:
 			printf("~3if (~1# ~R\n", r);
-			if r.rhs.left: emittest(r.rhs.left, "children[0]", " ");
-			if r.rhs.right: emittest(r.rhs.right, "children[1]", " ");
+			if r.rhs.left: emittest(r.rhs.left, "self.children[0]", "and" if r.rhs.right else "");
+			if r.rhs.right: emittest(r.rhs.right, "self.children[1]", "");
 			printf("~3):\n~4c = ");
 		if r.rhs.left: emitcost(r.rhs.left,  "l");
 		if r.rhs.right: emitcost(r.rhs.right,  "r");
@@ -450,7 +450,7 @@ def emitcost(t, v):
 		printf("~s.cost[~P~S_NT] + ", v, p)
 
 
-def emittest(t, v, suffix, hasParent=False):
+def emittest(t, v, suffix):
 	"""emit clause for testing a match"""
 	if t is None:
 		print("Internal Error, Empty Tree Passed to emittest\n")
@@ -458,10 +458,9 @@ def emittest(t, v, suffix, hasParent=False):
 
 	p = t.op
 	if p.kind == TERM:
-		if hasParent: printf("~4 and ~s.value == ~d~s# ~S\n", v, p.esn,suffix, p);
-		else: printf("~4~s.value == ~d~s# ~S\n", v, p.esn,suffix, p);
-		if t.left: emittest(t.left,"%s.children[0]"%v, suffix, True);
-		if t.right: emittest(t.right,"%s.children[1]"%v, suffix, True);
+		printf("~4~s.value == ~d ~s # ~S\n", v, p.esn, "and" if t.nterms>1 else suffix, p);
+		if t.left: emittest(t.left,"%s.children[0]"%v, "and" if t.right and t.right.nterms else suffix)
+		if t.right: emittest(t.right,"%s.children[1]"%v, suffix)
 
 
 
@@ -499,7 +498,7 @@ def computekids(t, v, kidnum):
 			ret += computekids(t.right, "RIGHT_CHILD(%s)" % v, kidnum)
 	return ret
 
-def emitkids(rules):
+def emitkids():
 	"""emit burm_kids"""
 	class KidCount:
 		count=0
@@ -511,14 +510,19 @@ def emitkids(rules):
 		else:
 			existing[out].append(r)
 
-	printf("NODEPTR_TYPE *%Pkids(NODEPTR_TYPE p, int eruleno, NODEPTR_TYPE kids[]) {\n"
-"%1%Passert(p, PANIC(\"NULL tree in %Pkids\\n\"));\n"
-"%1%Passert(kids, PANIC(\"NULL kids in %Pkids\\n\"));\n"
-"%1switch (eruleno) {\n");
-	for out,rulesList in existing.items():	
+	printf('''#  returns nodes to be matched and the non-terminals to which they must be  further to matched based on the rule applied to the current node
+def getmatchedkids(p, rule):\n
+	kids = []
+	ruleno = rule.number
+	assert p, PANIC("Bad Node argument tree in kids\\n");
+	if ruleno is None: assert 0, "No rulenumber associated with rule"\n''')
+
+	for out,rulesList in existing.items():
+		printf('''~1elif(\n''')
 		for r in reversed(rulesList):
 			printf("%1case %d: /* %R */\n", r.ern, r)
-		printf("%s%2break;\n", out)
+		printf("~2):\n")
+		printf("~2~s\n", out)
 	printf("%1default:\n%2%Passert(0, PANIC(\"Bad external rule number %%d in %Pkids\\n\", eruleno));\n%1}\n%1return kids;\n}\n\n");
 
 
@@ -595,13 +599,15 @@ def main():
 
 	emitrules();
 
+	emitkids();
+
 	emitfuncs();
 
 	emitnode();
 
 	emitclosure();
 
-	emitstate()
+	emitstate();
 
 
 	# printf("/* emitnts(rules, nrules) - started */\n");

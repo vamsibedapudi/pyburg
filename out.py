@@ -56,6 +56,63 @@ prefix_rules = {
 	10 : Rule("con: CONST", 3, "CONST", [] , 0),
 }
 
+#  returns nodes to be matched and the non-terminals to which they must be  further to matched based on the rule applied to the current node
+def getmatchedkids(p, rule):
+
+	kids = []
+	ruleno = rule.number
+	assert p, PANIC("Bad Node argument tree in kids\n");
+	if ruleno is None: assert 0, "No rulenumber associated with rule"
+	elif(
+%1case %d: /* %R */
+		):
+				kids[0] = LEFT_CHILD(LEFT_CHILD(LEFT_CHILD(p)));
+		kids[1] = RIGHT_CHILD(LEFT_CHILD(LEFT_CHILD(p)));
+		kids[2] = RIGHT_CHILD(LEFT_CHILD(p));
+		kids[3] = LEFT_CHILD(RIGHT_CHILD(p));
+		kids[4] = LEFT_CHILD(RIGHT_CHILD(RIGHT_CHILD(p)));
+		kids[5] = RIGHT_CHILD(RIGHT_CHILD(RIGHT_CHILD(p)));
+
+	elif(
+%1case %d: /* %R */
+		):
+				kids[0] = LEFT_CHILD(p);
+		kids[1] = RIGHT_CHILD(p);
+
+	elif(
+%1case %d: /* %R */
+		):
+				kids[0] = LEFT_CHILD(p);
+
+	elif(
+%1case %d: /* %R */
+%1case %d: /* %R */
+		):
+				kids[0] = p;
+
+	elif(
+%1case %d: /* %R */
+%1case %d: /* %R */
+		):
+		
+	elif(
+%1case %d: /* %R */
+		):
+				kids[0] = RIGHT_CHILD(p);
+
+	elif(
+%1case %d: /* %R */
+%1case %d: /* %R */
+		):
+				kids[0] = LEFT_CHILD(LEFT_CHILD(p));
+		kids[1] = RIGHT_CHILD(p);
+
+%1default:
+%2%Passert(0, PANIC("Bad external rule number %%d in %Pkids\n", eruleno));
+%1}
+%1return kids;
+}
+
 # gives the best rule to apply for that non-terminal
 def getrule(p, goalnt):
 	assert goalnt in nts.keys(), "Bad goal nonterminal %d in getrule\n" % goalnt
@@ -102,7 +159,7 @@ class Node:
 			assert r, "Right Child is None for %d"%self.value
 
 			if (	# stm: MOVE(MEM(loc),reg)
-				children[0].value == 2 # MEM
+				self.children[0].value == 2 and # MEM
 			):
 				c = l.children[0].cost[prefix_loc_NT] + r.cost[prefix_reg_NT] + 4;
 				if (cost + 0 < self.cost[prefix_stm_NT]): # stm: MOVE(MEM(loc),reg)
@@ -117,7 +174,7 @@ class Node:
 			assert l, "Left Child is None for %d"%self.value
 
 			if (	# reg: MEM(loc)
-				True # No checks for any terminal
+				True # No terminals
 			):
 				c = l.cost[prefix_loc_NT] + 4;
 				if (cost + 0 < self.cost[prefix_reg_NT]): # reg: MEM(loc)
@@ -135,7 +192,7 @@ class Node:
 			assert r, "Right Child is None for %d"%self.value
 
 			if (	# loc: PLUS(NAME,reg)
-				children[0].value == 4 # NAME
+				self.children[0].value == 4 and # NAME
 			):
 				c = r.cost[prefix_reg_NT] + 0;
 				if (cost + 0 < self.cost[prefix_loc_NT]): # loc: PLUS(NAME,reg)
@@ -143,7 +200,7 @@ class Node:
 					self.rule[prefix_loc_NT] = 9;
 
 			if (	# reg: PLUS(MEM(loc),reg)
-				children[0].value == 2 # MEM
+				self.children[0].value == 2 and # MEM
 			):
 				c = l.children[0].cost[prefix_loc_NT] + r.cost[prefix_reg_NT] + 4;
 				if (cost + 0 < self.cost[prefix_reg_NT]): # reg: PLUS(MEM(loc),reg)
@@ -152,7 +209,7 @@ class Node:
 					self.closure_reg(cost + 0);
 
 			if (	# reg: PLUS(reg,reg)
-				True # No checks for any terminal
+				True # No terminals
 			):
 				c = l.cost[prefix_reg_NT] + r.cost[prefix_reg_NT] + 2;
 				if (cost + 0 < self.cost[prefix_reg_NT]): # reg: PLUS(reg,reg)
@@ -161,10 +218,10 @@ class Node:
 					self.closure_reg(cost + 0);
 
 			if (	# reg: PLUS(PLUS(PLUS(con,reg),reg),PLUS(con,PLUS(con,reg)))
-				children[0].value == 3 # PLUS
-				 and children[0].children[0].value == 3 # PLUS
-				children[1].value == 3 # PLUS
-				 and children[1].children[1].value == 3 # PLUS
+				self.children[0].value == 3 and # PLUS
+				self.children[0].children[0].value == 3 and # PLUS
+				self.children[1].value == 3 and # PLUS
+				self.children[1].children[1].value == 3  # PLUS
 			):
 				c = l.children[0].children[0].cost[prefix_con_NT] + l.children[0].children[0].cost[prefix_reg_NT] + l.children[0].cost[prefix_reg_NT] + r.children[0].cost[prefix_con_NT] + r.children[0].children[0].cost[prefix_con_NT] + r.children[0].children[0].cost[prefix_reg_NT] + 3;
 				if (cost + 0 < self.cost[prefix_reg_NT]): # reg: PLUS(PLUS(PLUS(con,reg),reg),PLUS(con,PLUS(con,reg)))
@@ -178,7 +235,7 @@ class Node:
 			assert len(self.children) == 0, " Invalid arity supplied to %d"%self.value
 
 			if (	# loc: NAME
-				True # No checks for any terminal
+				True # No terminals
 			):
 				c = 0;
 				if (cost + 0 < self.cost[prefix_loc_NT]): # loc: NAME
@@ -191,7 +248,7 @@ class Node:
 			assert len(self.children) == 0, " Invalid arity supplied to %d"%self.value
 
 			if (	# con: CONST
-				True # No checks for any terminal
+				True # No terminals
 			):
 				c = 0;
 				if (cost + 0 < self.cost[prefix_con_NT]): # con: CONST
