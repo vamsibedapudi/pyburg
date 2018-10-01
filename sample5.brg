@@ -2,7 +2,7 @@
 %%
 stm:    MOVE(MEM(loc),reg) = 1 (4);
 
-reg:    PLUS(PLUS(PLUS(con,reg),reg),PLUS(con,PLUS(con,reg))) = 2 (3);
+reg:    PLUS(con,reg) = 2 (3);
 reg:    PLUS(reg,reg) = 3 (2);
 reg:    PLUS(MEM(loc),reg) = 4 (4);
 reg:    MEM(loc) = 5 (4);
@@ -15,42 +15,52 @@ loc:    PLUS(NAME,reg) = 9;
 con:    CONST = 10;
 
 %%
-static void dumpCover(NODEPTR_TYPE p, int goalnt, int indent) {
-#ifdef TRACE
-	int eruleno = burm_rule(STATE_LABEL(p), goalnt);
-	short *nts = burm_nts[eruleno];
-	NODEPTR_TYPE kids[10];
-	int i;
 
-	for (i = 0; i < indent; i++)
-		fprintf(stderr, " ");
-	fprintf(stderr, "%s\n", burm_string[eruleno]);
-	burm_kids(p, eruleno, kids);
-	for (i = 0; nts[i]; i++)
-		dumpCover(kids[i], nts[i], indent + 1);
-#endif
-}
+MOVE=1
+MEM=2
+PLUS=3
+NAME=4
+CONST=6
 
-static NODEPTR_TYPE tree(int op, NODEPTR_TYPE l, NODEPTR_TYPE r) {
-	NODEPTR_TYPE p = malloc(sizeof *p);
+"""initializes tree required for labelling from user defined ast tree
+user defined ast tree class must contain functions getValue()and getChildren() which return
+    value of the root of the tree and the list of children trees respectively"""
+def initializeNode(P):
+    node = Node(P.getValue())
+    for child in P.getChildren():
+        node.children.append(initialize(child))
+    return node
 
-	assert(p);
-	p->op = op;
-	p->kids[0] = l; p->kids[1] = r;
-	return p;
-}
 
-main(void) {
-	NODEPTR_TYPE p;
+def dumpcover(p, goalnt, indent):
+    rule = getrule(p, goalnt)
+    sys.stdout.write("\t"*indent)
+    sys.stdout.write("%s\n"% rule.value)
 
-	p = tree(MOVE,
-		tree(MEM, tree(NAME, 0, 0), 0),
-		tree(PLUS,
-			tree(MEM, tree(PLUS,
-				tree(NAME, 0, 0),
-				tree(MEM, tree(NAME, 0, 0), 0)), 0),
-			tree(CONST, 0, 0) ) );
-	burm_label(p);
-	dumpCover(p, 1, 0);
-	return 0;
-}
+    for kid, nt in getmatchedkids(p, rule):
+        dumpcover(kid, nt, indent + 1)
+
+
+def tree(value, l=None, r=None):
+    p = Node()
+    p.value = value
+    if l: p.children.append(l)
+    if r: p.children.append(r)
+    return p
+
+
+def main():
+    p = tree(MOVE,
+        tree(MEM, tree(NAME, 0, 0), 0),
+        tree(PLUS,
+            tree(MEM, tree(PLUS,
+                tree(NAME, 0, 0),
+                tree(MEM, tree(NAME, 0, 0), 0)), 0),
+            tree(CONST, 0, 0) ) );
+    p.label()
+    dumpcover(p, 0, 0)
+    return 0;
+
+if __name__== "__main__":
+    main()
+

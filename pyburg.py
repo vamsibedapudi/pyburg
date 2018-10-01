@@ -195,7 +195,7 @@ def rule(lhs,rhs,ern,cost):
 	p = rhs.op
 	nt = nonterm(lhs)
 	r.lhs = nt
-	nt.rules.append(r);	
+	nt.rules.append(r);
 
 	r.packed = len(nt.rules)
 	r.rhs = rhs
@@ -229,7 +229,8 @@ def printf(msg, *args):
 			elif msg[i] == 's':
 				outfp.write(getArg())
 			elif msg[i] == 'P':
-				outfp.write(prefix+'_')
+				# outfp.write(prefix+'_')
+				pass
 			elif msg[i] == 'T':
 				t = getArg()
 				printf("~S", t.op)
@@ -244,7 +245,7 @@ def printf(msg, *args):
 			elif msg[i] == 'S':
 				p = getArg()
 				outfp.write(p.name)
-			elif (msg[i] == '1' or msg[i] == '2' or msg[i] == '3' or msg[i] == '4' or msg[i] == '5'): 
+			elif (msg[i] == '1' or msg[i] == '2' or msg[i] == '3' or msg[i] == '4' or msg[i] == '5'):
 				count = int(msg[i])
 				for j in range(0,count):
 					outfp.write('\t')
@@ -254,7 +255,7 @@ def printf(msg, *args):
 			outfp.write(msg[i])
 		i += 1
 
-		
+
 def reach(t):
 	""" mark all non-terminals in tree t as reachable"""
 	p = t.op
@@ -276,7 +277,8 @@ def ckreach(p):
 
 def emitheader():
 	"""emit initial definitions"""
-	printf('''try:
+	printf('''import sys
+try:
 	MAX_COST # exists
 except NameError:
 	MAX_COST = 1e16\n\n''')
@@ -304,7 +306,7 @@ def emitnts():
 	printf("\n~Pnts = {\n\n")
 	for p in nts:
 		printf("~1~d : \"~S\",\n", p.number-1, p)
-	printf("}\n\n")	
+	printf("}\n\n")
 
 def emitterms():
 	printf("\n~Pterms = {\n\n")
@@ -319,24 +321,25 @@ def computents(t):
 	if t:
 		p = t.op;
 		if p.kind == NONTERM:
-			ret += "%s_%s_NT, "%(prefix, p.name)
-		ret += computents(t.left) 
+			ret += "%s_NT, "%(p.name)
+		ret += computents(t.left)
 		ret += computents(t.right)
 	return ret;
 
 def emitrules():
 	printf('''class Rule:
-	def __init__(self, value, lhs, rhs, nts, cost):
+	def __init__(self, value, lhs, rhs, nts, number, cost):
 		self.value = value # entire rule as a string in its original format
 		self.lhs = lhs # ntnumber of lhs
 		self.rhs = rhs # string of rhs
 		self.nts = nts # all nts in rhs
+		self.number = number # Rule number
 		self.cost = cost # cost of the rule\n''')
 
 	printf("\n~Prules = {\n\n")
 	for r in rules:
 		nts = "["+computents(r.rhs)+ "]"
-		printf("~1~d : Rule(\"~R\", ~d, \"~T\", ~s , ~d),\n", r.ern, r, r.lhs.number-1, r.rhs, nts ,r.cost )
+		printf("~1~d : Rule(\"~R\", ~d, \"~T\", ~s , ~d, ~d),\n", r.ern, r, r.lhs.number-1, r.rhs, nts, r.ern, r.cost )
 	printf("}\n\n")
 
 def emitfuncs():
@@ -368,10 +371,10 @@ def emitnode():
 
 def emitrecord(prefix, r, cost):
 	"""emit code that tests for a winning match of rule r"""
-	if Tflag: printf("~s~Ptrace(self, ~d, cost + ~d, p.cost[~P~S_NT])\n",prefix, r.ern, cost, r.lhs)	
+	if Tflag: printf("~s~Ptrace(self, ~d, cost + ~d, p.cost[~P~S_NT])\n",prefix, r.ern, cost, r.lhs)
 
 	printf("~sif (", prefix);
-	
+
 	printf("cost + ~d < self.cost[~P~S_NT]): # ~R\n", cost, r.lhs, r)
 	printf("~s~1self.cost[~P~S_NT] = cost + ~d;\n",prefix, r.lhs, cost)
 	printf("~s~1self.rule[~P~S_NT] = ~d;\n",prefix, r.lhs, r.ern);
@@ -382,7 +385,7 @@ def emitclosure():
 	"""emit the closure functions"""
 	for p in nts:
 		if len(p.chain):
-			printf("~1def closure_~S(self, cost): \n", p);
+			printf("~1def closure_~S(self, cost):\n", p);
 			for r in p.chain:
 				emitrecord("\t\t", r, r.cost)
 	printf("\n")
@@ -406,7 +409,7 @@ def emitcase(p):
 	if p.kind==NONTERM:
 		print("Internal Error: emitcase being called for a non terminal %s"%p.name)
 		return
-	
+
 	printf("\n~2elif self.value == ~d: # ~S\n", p.esn, p)
 
 	printf('''\n~3assert len(self.children) == ~d, " Invalid arity supplied to %d"%self.value\n''', p.arity)
@@ -425,13 +428,13 @@ def emitcase(p):
 	for r in reversed(p.rules):
 		if r.rhs.nterms <= 1:
 			printf("~3if (~1# ~R\n", r);
-			printf("~4True # No terminals\n")
-			printf("~3):\n~4c = ");
+			printf("~5True # No terminals\n")
+			printf("~4):\n\n~4cost = ");
 		else:
 			printf("~3if (~1# ~R\n", r);
-			if r.rhs.left: emittest(r.rhs.left, "self.children[0]", "and" if r.rhs.right else "");
+			if r.rhs.left: emittest(r.rhs.left, "self.children[0]", "and" if r.rhs.right and r.rhs.right.nterms else "");
 			if r.rhs.right: emittest(r.rhs.right, "self.children[1]", "");
-			printf("~3):\n~4c = ");
+			printf("~4):\n\n~4cost = ");
 		if r.rhs.left: emitcost(r.rhs.left,  "l");
 		if r.rhs.right: emitcost(r.rhs.right,  "r");
 		printf("~d;\n", r.cost);
@@ -458,7 +461,7 @@ def emittest(t, v, suffix):
 
 	p = t.op
 	if p.kind == TERM:
-		printf("~4~s.value == ~d ~s # ~S\n", v, p.esn, "and" if t.nterms>1 else suffix, p);
+		printf("~5~s.value == ~d ~s # ~S\n", v, p.esn, "and" if t.nterms>1 else suffix, p);
 		if t.left: emittest(t.left,"%s.children[0]"%v, "and" if t.right and t.right.nterms else suffix)
 		if t.right: emittest(t.right,"%s.children[1]"%v, suffix)
 
@@ -490,12 +493,12 @@ def computekids(t, v, kidnum):
 	p = t.op;
 	ret = ""
 	if p.kind == NONTERM:
-		ret += "\t\tkids[%d] = %s;\n"% (kidnum.count , v)
+		ret += "\t\tkids.append((%s, rule.nts[%d]));\n"% (v, kidnum.count)
 		kidnum.count+=1
 	elif p.arity > 0:
-		ret += computekids(t.left, "LEFT_CHILD(%s)" % v, kidnum);
+		ret += computekids(t.left, "%s.children[0]" % v, kidnum);
 		if p.arity == 2:
-			ret += computekids(t.right, "RIGHT_CHILD(%s)" % v, kidnum)
+			ret += computekids(t.right, "%s.children[1]" % v, kidnum)
 	return ret
 
 def emitkids():
@@ -514,17 +517,19 @@ def emitkids():
 def getmatchedkids(p, rule):\n
 	kids = []
 	ruleno = rule.number
-	assert p, PANIC("Bad Node argument tree in kids\\n");
-	if ruleno is None: assert 0, "No rulenumber associated with rule"\n''')
+	assert p, "Bad Node argument tree in kids\\n";\n
+	if ruleno is None: assert 0, "No rulenumber associated with rule\\n"\n\n''')
 
 	for out,rulesList in existing.items():
 		printf('''~1elif(\n''')
-		for r in reversed(rulesList):
-			printf("%1case %d: /* %R */\n", r.ern, r)
+		for i, r in enumerate(rulesList):
+			if i < len(rulesList)-1: printf("~3ruleno == ~d or # ~R\n", r.ern, r)
+			elif i == len(rulesList)-1: printf("~3ruleno == ~d # ~R\n", r.ern, r)
 		printf("~2):\n")
-		printf("~2~s\n", out)
-	printf("%1default:\n%2%Passert(0, PANIC(\"Bad external rule number %%d in %Pkids\\n\", eruleno));\n%1}\n%1return kids;\n}\n\n");
+		printf("\n~s\n", out if out != "" else "\t\tpass\n")
+	printf('''~1else: assert 0, "Bad external rule number %d in getmatchedkids\\n"%ruleno
 
+	return kids\n\n''')
 
 
 def main():
@@ -599,16 +604,15 @@ def main():
 
 	emitrules();
 
-	emitkids();
-
-	emitfuncs();
-
 	emitnode();
 
 	emitclosure();
 
 	emitstate();
 
+	emitfuncs();
+
+	emitkids();
 
 	# printf("/* emitnts(rules, nrules) - started */\n");
 	# emitnts(rules);
@@ -637,7 +641,7 @@ def main():
 	# 	emitstate(terms, globals.start, globals.ntnumber);
 	# printf("/* emitstate(nts) - ended */\n\n");
 
-	
+
 	# printf("#ifdef STATE_LABEL\n");
 	# printf("/* emitlabel(start) - started */\n");
 	# if (globals.start):
@@ -647,7 +651,7 @@ def main():
 	# printf("/* emitkids(rules, nrules) - started */\n");
 	# emitkids(rules);
 	# printf("/* emitkids(rules, nrules) - ended */\n\n");
-	
+
 	# printf("/* emitfuncs() - started */\n");
 	# emitfuncs();
 	# printf("/* emitfuncs(); - ended */\n\n");
@@ -656,12 +660,10 @@ def main():
 
 
 	# printf("/* footer of the input file - started */\n");
-	# copyfooter()
+	copyfooter()
 	# printf("/* footer of the input file - ended */\n\n");
 
 	return errcnt > 0;
 
-				
-  
 if __name__== "__main__":
 	main()

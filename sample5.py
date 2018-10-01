@@ -179,10 +179,45 @@ class Node:
 
 
 """initializes tree required for labelling from user defined ast tree
-user defined ast tree class must contain functions getValue()and getChildren() which return 
+user defined ast tree class must contain functions getValue()and getChildren() which return
 	value of the root of the tree and the list of children trees respectively"""
 def initializeNode(P):
 	node = Node(P.getValue())
 	for child in P.getChildren():
 		node.children.append(initialize(child))
 	return node
+
+
+def dumpcover(p, goalnt, indent):
+	rule = getrule(p, goalnt)
+	sys.stdout.write("\t"*indent)
+	sys.stdout.write("%s\n"% rule.value)
+
+	for kid, nt in getmatchedkids(p, rule):
+		dumpcover(kid, nt, indent + 1)
+
+
+def tree(value, l, r):
+	p = Node()
+	p.value = value
+	p.children.append(l)
+	p.children.append(r)
+	return p
+
+
+def main():
+	NODEPTR_TYPE p;
+
+	p = tree(MOVE,
+		tree(MEM, tree(NAME, 0, 0), 0),
+		tree(PLUS,
+			tree(MEM, tree(PLUS,
+				tree(NAME, 0, 0),
+				tree(MEM, tree(NAME, 0, 0), 0)), 0),
+			tree(CONST, 0, 0) ) );
+	burm_label(p);
+	dumpCover(p, 1, 0);
+	return 0;
+
+if __name__== "__main__":
+	main()

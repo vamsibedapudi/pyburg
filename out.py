@@ -1,3 +1,4 @@
+import sys
 try:
 	MAX_COST # exists
 except NameError:
@@ -9,14 +10,14 @@ except NameError:
 	def trace(p, rule, cost, bestcost):
 		sys.stdout.write("%s matched %s with cost %d vs. %d\n" % (p,rule.name, cost, bestcost))
 
-prefix_MAX_NT = 4;
+MAX_NT = 4;
 
-prefix_stm_NT = 0
-prefix_loc_NT = 1
-prefix_reg_NT = 2
-prefix_con_NT = 3
+stm_NT = 0
+loc_NT = 1
+reg_NT = 2
+con_NT = 3
 
-prefix_nts = {
+nts = {
 
 	0 : "stm",
 	1 : "loc",
@@ -25,7 +26,7 @@ prefix_nts = {
 }
 
 
-prefix_terms = {
+terms = {
 
 	1 : "MOVE",
 	2 : "MEM",
@@ -35,91 +36,27 @@ prefix_terms = {
 }
 
 class Rule:
-	def __init__(self, value, lhs, rhs, nts, cost):
+	def __init__(self, value, lhs, rhs, nts, number, cost):
 		self.value = value # entire rule as a string in its original format
 		self.lhs = lhs # ntnumber of lhs
 		self.rhs = rhs # string of rhs
 		self.nts = nts # all nts in rhs
+		self.number = number # Rule number
 		self.cost = cost # cost of the rule
 
-prefix_rules = {
+rules = {
 
-	1 : Rule("stm: MOVE(MEM(loc),reg)", 0, "MOVE(MEM(loc),reg)", [prefix_loc_NT, prefix_reg_NT, ] , 4),
-	2 : Rule("reg: PLUS(PLUS(PLUS(con,reg),reg),PLUS(con,PLUS(con,reg)))", 2, "PLUS(PLUS(PLUS(con,reg),reg),PLUS(con,PLUS(con,reg)))", [prefix_con_NT, prefix_reg_NT, prefix_reg_NT, prefix_con_NT, prefix_con_NT, prefix_reg_NT, ] , 3),
-	3 : Rule("reg: PLUS(reg,reg)", 2, "PLUS(reg,reg)", [prefix_reg_NT, prefix_reg_NT, ] , 2),
-	4 : Rule("reg: PLUS(MEM(loc),reg)", 2, "PLUS(MEM(loc),reg)", [prefix_loc_NT, prefix_reg_NT, ] , 4),
-	5 : Rule("reg: MEM(loc)", 2, "MEM(loc)", [prefix_loc_NT, ] , 4),
-	6 : Rule("reg: con", 2, "con", [prefix_con_NT, ] , 2),
-	7 : Rule("loc: reg", 1, "reg", [prefix_reg_NT, ] , 0),
-	8 : Rule("loc: NAME", 1, "NAME", [] , 0),
-	9 : Rule("loc: PLUS(NAME,reg)", 1, "PLUS(NAME,reg)", [prefix_reg_NT, ] , 0),
-	10 : Rule("con: CONST", 3, "CONST", [] , 0),
+	1 : Rule("stm: MOVE(MEM(loc),reg)", 0, "MOVE(MEM(loc),reg)", [loc_NT, reg_NT, ] , 1, 4),
+	2 : Rule("reg: PLUS(con,reg)", 2, "PLUS(con,reg)", [con_NT, reg_NT, ] , 2, 3),
+	3 : Rule("reg: PLUS(reg,reg)", 2, "PLUS(reg,reg)", [reg_NT, reg_NT, ] , 3, 2),
+	4 : Rule("reg: PLUS(MEM(loc),reg)", 2, "PLUS(MEM(loc),reg)", [loc_NT, reg_NT, ] , 4, 4),
+	5 : Rule("reg: MEM(loc)", 2, "MEM(loc)", [loc_NT, ] , 5, 4),
+	6 : Rule("reg: con", 2, "con", [con_NT, ] , 6, 2),
+	7 : Rule("loc: reg", 1, "reg", [reg_NT, ] , 7, 0),
+	8 : Rule("loc: NAME", 1, "NAME", [] , 8, 0),
+	9 : Rule("loc: PLUS(NAME,reg)", 1, "PLUS(NAME,reg)", [reg_NT, ] , 9, 0),
+	10 : Rule("con: CONST", 3, "CONST", [] , 10, 0),
 }
-
-#  returns nodes to be matched and the non-terminals to which they must be  further to matched based on the rule applied to the current node
-def getmatchedkids(p, rule):
-
-	kids = []
-	ruleno = rule.number
-	assert p, PANIC("Bad Node argument tree in kids\n");
-	if ruleno is None: assert 0, "No rulenumber associated with rule"
-	elif(
-%1case %d: /* %R */
-		):
-				kids[0] = LEFT_CHILD(LEFT_CHILD(LEFT_CHILD(p)));
-		kids[1] = RIGHT_CHILD(LEFT_CHILD(LEFT_CHILD(p)));
-		kids[2] = RIGHT_CHILD(LEFT_CHILD(p));
-		kids[3] = LEFT_CHILD(RIGHT_CHILD(p));
-		kids[4] = LEFT_CHILD(RIGHT_CHILD(RIGHT_CHILD(p)));
-		kids[5] = RIGHT_CHILD(RIGHT_CHILD(RIGHT_CHILD(p)));
-
-	elif(
-%1case %d: /* %R */
-		):
-				kids[0] = LEFT_CHILD(p);
-		kids[1] = RIGHT_CHILD(p);
-
-	elif(
-%1case %d: /* %R */
-		):
-				kids[0] = LEFT_CHILD(p);
-
-	elif(
-%1case %d: /* %R */
-%1case %d: /* %R */
-		):
-				kids[0] = p;
-
-	elif(
-%1case %d: /* %R */
-%1case %d: /* %R */
-		):
-		
-	elif(
-%1case %d: /* %R */
-		):
-				kids[0] = RIGHT_CHILD(p);
-
-	elif(
-%1case %d: /* %R */
-%1case %d: /* %R */
-		):
-				kids[0] = LEFT_CHILD(LEFT_CHILD(p));
-		kids[1] = RIGHT_CHILD(p);
-
-%1default:
-%2%Passert(0, PANIC("Bad external rule number %%d in %Pkids\n", eruleno));
-%1}
-%1return kids;
-}
-
-# gives the best rule to apply for that non-terminal
-def getrule(p, goalnt):
-	assert goalnt in nts.keys(), "Bad goal nonterminal %d in getrule\n" % goalnt
-	assert p, "Bad Node argument to getrule\n"
-	ruleno = p.rule[goalnt];
-	assert ruleno in rules.keys(), "Bad rule number %d for non-terminal %d in getrule\n" % (ruleno, goalnt)
-	return rules[ruleno]
 
 class Node:
 
@@ -135,15 +72,15 @@ class Node:
 			child.label()
 		self.match()
 
-	def closure_reg(self, cost): 
-		if (cost + 0 < self.cost[prefix_loc_NT]): # loc: reg
-			self.cost[prefix_loc_NT] = cost + 0;
-			self.rule[prefix_loc_NT] = 7;
+	def closure_reg(self, cost):
+		if (cost + 0 < self.cost[loc_NT]): # loc: reg
+			self.cost[loc_NT] = cost + 0;
+			self.rule[loc_NT] = 7;
 
-	def closure_con(self, cost): 
-		if (cost + 2 < self.cost[prefix_reg_NT]): # reg: con
-			self.cost[prefix_reg_NT] = cost + 2;
-			self.rule[prefix_reg_NT] = 6;
+	def closure_con(self, cost):
+		if (cost + 2 < self.cost[reg_NT]): # reg: con
+			self.cost[reg_NT] = cost + 2;
+			self.rule[reg_NT] = 6;
 			self.closure_reg(cost + 2);
 
 
@@ -159,12 +96,13 @@ class Node:
 			assert r, "Right Child is None for %d"%self.value
 
 			if (	# stm: MOVE(MEM(loc),reg)
-				self.children[0].value == 2 and # MEM
-			):
-				c = l.children[0].cost[prefix_loc_NT] + r.cost[prefix_reg_NT] + 4;
-				if (cost + 0 < self.cost[prefix_stm_NT]): # stm: MOVE(MEM(loc),reg)
-					self.cost[prefix_stm_NT] = cost + 0;
-					self.rule[prefix_stm_NT] = 1;
+					self.children[0].value == 2  # MEM
+				):
+
+				cost = l.children[0].cost[loc_NT] + r.cost[reg_NT] + 4;
+				if (cost + 0 < self.cost[stm_NT]): # stm: MOVE(MEM(loc),reg)
+					self.cost[stm_NT] = cost + 0;
+					self.rule[stm_NT] = 1;
 
 
 		elif self.value == 2: # MEM
@@ -174,12 +112,13 @@ class Node:
 			assert l, "Left Child is None for %d"%self.value
 
 			if (	# reg: MEM(loc)
-				True # No terminals
-			):
-				c = l.cost[prefix_loc_NT] + 4;
-				if (cost + 0 < self.cost[prefix_reg_NT]): # reg: MEM(loc)
-					self.cost[prefix_reg_NT] = cost + 0;
-					self.rule[prefix_reg_NT] = 5;
+					True # No terminals
+				):
+
+				cost = l.cost[loc_NT] + 4;
+				if (cost + 0 < self.cost[reg_NT]): # reg: MEM(loc)
+					self.cost[reg_NT] = cost + 0;
+					self.rule[reg_NT] = 5;
 					self.closure_reg(cost + 0);
 
 
@@ -192,41 +131,42 @@ class Node:
 			assert r, "Right Child is None for %d"%self.value
 
 			if (	# loc: PLUS(NAME,reg)
-				self.children[0].value == 4 and # NAME
-			):
-				c = r.cost[prefix_reg_NT] + 0;
-				if (cost + 0 < self.cost[prefix_loc_NT]): # loc: PLUS(NAME,reg)
-					self.cost[prefix_loc_NT] = cost + 0;
-					self.rule[prefix_loc_NT] = 9;
+					self.children[0].value == 4  # NAME
+				):
+
+				cost = r.cost[reg_NT] + 0;
+				if (cost + 0 < self.cost[loc_NT]): # loc: PLUS(NAME,reg)
+					self.cost[loc_NT] = cost + 0;
+					self.rule[loc_NT] = 9;
 
 			if (	# reg: PLUS(MEM(loc),reg)
-				self.children[0].value == 2 and # MEM
-			):
-				c = l.children[0].cost[prefix_loc_NT] + r.cost[prefix_reg_NT] + 4;
-				if (cost + 0 < self.cost[prefix_reg_NT]): # reg: PLUS(MEM(loc),reg)
-					self.cost[prefix_reg_NT] = cost + 0;
-					self.rule[prefix_reg_NT] = 4;
+					self.children[0].value == 2  # MEM
+				):
+
+				cost = l.children[0].cost[loc_NT] + r.cost[reg_NT] + 4;
+				if (cost + 0 < self.cost[reg_NT]): # reg: PLUS(MEM(loc),reg)
+					self.cost[reg_NT] = cost + 0;
+					self.rule[reg_NT] = 4;
 					self.closure_reg(cost + 0);
 
 			if (	# reg: PLUS(reg,reg)
-				True # No terminals
-			):
-				c = l.cost[prefix_reg_NT] + r.cost[prefix_reg_NT] + 2;
-				if (cost + 0 < self.cost[prefix_reg_NT]): # reg: PLUS(reg,reg)
-					self.cost[prefix_reg_NT] = cost + 0;
-					self.rule[prefix_reg_NT] = 3;
+					True # No terminals
+				):
+
+				cost = l.cost[reg_NT] + r.cost[reg_NT] + 2;
+				if (cost + 0 < self.cost[reg_NT]): # reg: PLUS(reg,reg)
+					self.cost[reg_NT] = cost + 0;
+					self.rule[reg_NT] = 3;
 					self.closure_reg(cost + 0);
 
-			if (	# reg: PLUS(PLUS(PLUS(con,reg),reg),PLUS(con,PLUS(con,reg)))
-				self.children[0].value == 3 and # PLUS
-				self.children[0].children[0].value == 3 and # PLUS
-				self.children[1].value == 3 and # PLUS
-				self.children[1].children[1].value == 3  # PLUS
-			):
-				c = l.children[0].children[0].cost[prefix_con_NT] + l.children[0].children[0].cost[prefix_reg_NT] + l.children[0].cost[prefix_reg_NT] + r.children[0].cost[prefix_con_NT] + r.children[0].children[0].cost[prefix_con_NT] + r.children[0].children[0].cost[prefix_reg_NT] + 3;
-				if (cost + 0 < self.cost[prefix_reg_NT]): # reg: PLUS(PLUS(PLUS(con,reg),reg),PLUS(con,PLUS(con,reg)))
-					self.cost[prefix_reg_NT] = cost + 0;
-					self.rule[prefix_reg_NT] = 2;
+			if (	# reg: PLUS(con,reg)
+					True # No terminals
+				):
+
+				cost = l.cost[con_NT] + r.cost[reg_NT] + 3;
+				if (cost + 0 < self.cost[reg_NT]): # reg: PLUS(con,reg)
+					self.cost[reg_NT] = cost + 0;
+					self.rule[reg_NT] = 2;
 					self.closure_reg(cost + 0);
 
 
@@ -235,12 +175,13 @@ class Node:
 			assert len(self.children) == 0, " Invalid arity supplied to %d"%self.value
 
 			if (	# loc: NAME
-				True # No terminals
-			):
-				c = 0;
-				if (cost + 0 < self.cost[prefix_loc_NT]): # loc: NAME
-					self.cost[prefix_loc_NT] = cost + 0;
-					self.rule[prefix_loc_NT] = 8;
+					True # No terminals
+				):
+
+				cost = 0;
+				if (cost + 0 < self.cost[loc_NT]): # loc: NAME
+					self.cost[loc_NT] = cost + 0;
+					self.rule[loc_NT] = 8;
 
 
 		elif self.value == 6: # CONST
@@ -248,13 +189,127 @@ class Node:
 			assert len(self.children) == 0, " Invalid arity supplied to %d"%self.value
 
 			if (	# con: CONST
-				True # No terminals
-			):
-				c = 0;
-				if (cost + 0 < self.cost[prefix_con_NT]): # con: CONST
-					self.cost[prefix_con_NT] = cost + 0;
-					self.rule[prefix_con_NT] = 10;
+					True # No terminals
+				):
+
+				cost = 0;
+				if (cost + 0 < self.cost[con_NT]): # con: CONST
+					self.cost[con_NT] = cost + 0;
+					self.rule[con_NT] = 10;
 					self.closure_con(cost + 0);
 
 		else: assert 0, "Bad operator %d in match\n" % self.value
+
+# gives the best rule to apply for that non-terminal
+def getrule(p, goalnt):
+	assert goalnt in nts.keys(), "Bad goal nonterminal %d in getrule\n" % goalnt
+	assert p, "Bad Node argument to getrule\n"
+	ruleno = p.rule[goalnt];
+	assert ruleno in rules.keys(), "Bad rule number %d for non-terminal %d in getrule\n" % (ruleno, goalnt)
+	return rules[ruleno]
+
+#  returns nodes to be matched and the non-terminals to which they must be  further to matched based on the rule applied to the current node
+def getmatchedkids(p, rule):
+
+	kids = []
+	ruleno = rule.number
+	assert p, "Bad Node argument tree in kids\n";
+
+	if ruleno is None: assert 0, "No rulenumber associated with rule\n"
+
+	elif(
+			ruleno == 8 or # loc: NAME
+			ruleno == 10 # con: CONST
+		):
+
+		pass
+
+	elif(
+			ruleno == 9 # loc: PLUS(NAME,reg)
+		):
+
+		kids.append((p.children[1], rule.nts[0]));
+
+	elif(
+			ruleno == 2 or # reg: PLUS(con,reg)
+			ruleno == 3 # reg: PLUS(reg,reg)
+		):
+
+		kids.append((p.children[0], rule.nts[0]));
+		kids.append((p.children[1], rule.nts[1]));
+
+	elif(
+			ruleno == 5 # reg: MEM(loc)
+		):
+
+		kids.append((p.children[0], rule.nts[0]));
+
+	elif(
+			ruleno == 1 or # stm: MOVE(MEM(loc),reg)
+			ruleno == 4 # reg: PLUS(MEM(loc),reg)
+		):
+
+		kids.append((p.children[0].children[0], rule.nts[0]));
+		kids.append((p.children[1], rule.nts[1]));
+
+	elif(
+			ruleno == 6 or # reg: con
+			ruleno == 7 # loc: reg
+		):
+
+		kids.append((p, rule.nts[0]));
+
+	else: assert 0, "Bad external rule number %d in getmatchedkids\n"%ruleno
+
+	return kids
+
+
+
+MOVE=1
+MEM=2
+PLUS=3
+NAME=4
+CONST=6
+
+"""initializes tree required for labelling from user defined ast tree
+user defined ast tree class must contain functions getValue()and getChildren() which return
+    value of the root of the tree and the list of children trees respectively"""
+def initializeNode(P):
+    node = Node(P.getValue())
+    for child in P.getChildren():
+        node.children.append(initialize(child))
+    return node
+
+
+def dumpcover(p, goalnt, indent):
+    rule = getrule(p, goalnt)
+    sys.stdout.write("\t"*indent)
+    sys.stdout.write("%s\n"% rule.value)
+
+    for kid, nt in getmatchedkids(p, rule):
+        dumpcover(kid, nt, indent + 1)
+
+
+def tree(value, l=None, r=None):
+    p = Node()
+    p.value = value
+    if l: p.children.append(l)
+    if r: p.children.append(r)
+    return p
+
+
+def main():
+    p = tree(MOVE,
+        tree(MEM, tree(NAME, 0, 0), 0),
+        tree(PLUS,
+            tree(MEM, tree(PLUS,
+                tree(NAME, 0, 0),
+                tree(MEM, tree(NAME, 0, 0), 0)), 0),
+            tree(CONST, 0, 0) ) );
+    p.label()
+    dumpcover(p, 0, 0)
+    return 0;
+
+if __name__== "__main__":
+    main()
 
