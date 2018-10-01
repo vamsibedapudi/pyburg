@@ -1,0 +1,588 @@
+Created by PLY version 3.11 (http://www.dabeaz.com/ply)
+
+Grammar
+
+Rule 0     S' -> spec
+Rule 1     spec -> decls PPERCENT rules
+Rule 2     spec -> decls
+Rule 3     decls -> empty
+Rule 4     decls -> decls decl
+Rule 5     decl -> TERMINAL blist 
+
+Rule 6     decl -> START lhs 
+
+Rule 7     decl -> 
+
+Rule 8     decl -> error 
+
+Rule 9     blist -> empty
+Rule 10    blist -> blist ID = INT
+Rule 11    rules -> empty
+Rule 12    rules -> rules lhs : tree = INT cost ; 
+
+Rule 13    rules -> rules 
+
+Rule 14    rules -> rules error 
+
+Rule 15    lhs -> ID
+Rule 16    tree -> ID
+Rule 17    tree -> ID ( tree )
+Rule 18    tree -> ID ( tree , tree )
+Rule 19    cost -> empty
+Rule 20    cost -> ( INT )
+Rule 21    empty -> <empty>
+
+Terminals, with rules where they appear
+
+
+                    : 5 6 7 8 12 13 14
+(                    : 17 18 20
+)                    : 17 18 20
+,                    : 18
+:                    : 12
+;                    : 12
+=                    : 10 12
+ID                   : 10 15 16 17 18
+INT                  : 10 12 20
+PPERCENT             : 1
+START                : 6
+TERMINAL             : 5
+error                : 8 14
+
+Nonterminals, with rules where they appear
+
+blist                : 5 10
+cost                 : 12
+decl                 : 4
+decls                : 1 2 4
+empty                : 3 9 11 19
+lhs                  : 6 12
+rules                : 1 12 13 14
+spec                 : 0
+tree                 : 12 17 18 18
+
+Parsing method: LALR
+
+state 0
+
+    (0) S' -> . spec
+    (1) spec -> . decls PPERCENT rules
+    (2) spec -> . decls
+    (3) decls -> . empty
+    (4) decls -> . decls decl
+    (21) empty -> .
+
+    PPERCENT        reduce using rule 21 (empty -> .)
+    TERMINAL        reduce using rule 21 (empty -> .)
+    START           reduce using rule 21 (empty -> .)
+    
+               reduce using rule 21 (empty -> .)
+    error           reduce using rule 21 (empty -> .)
+    $end            reduce using rule 21 (empty -> .)
+
+    spec                           shift and go to state 1
+    decls                          shift and go to state 2
+    empty                          shift and go to state 3
+
+state 1
+
+    (0) S' -> spec .
+
+
+
+state 2
+
+    (1) spec -> decls . PPERCENT rules
+    (2) spec -> decls .
+    (4) decls -> decls . decl
+    (5) decl -> . TERMINAL blist 
+
+    (6) decl -> . START lhs 
+
+    (7) decl -> . 
+
+    (8) decl -> . error 
+
+
+    PPERCENT        shift and go to state 4
+    $end            reduce using rule 2 (spec -> decls .)
+    TERMINAL        shift and go to state 6
+    START           shift and go to state 8
+    
+               shift and go to state 7
+    error           shift and go to state 9
+
+    decl                           shift and go to state 5
+
+state 3
+
+    (3) decls -> empty .
+
+    PPERCENT        reduce using rule 3 (decls -> empty .)
+    TERMINAL        reduce using rule 3 (decls -> empty .)
+    START           reduce using rule 3 (decls -> empty .)
+    
+               reduce using rule 3 (decls -> empty .)
+    error           reduce using rule 3 (decls -> empty .)
+    $end            reduce using rule 3 (decls -> empty .)
+
+
+state 4
+
+    (1) spec -> decls PPERCENT . rules
+    (11) rules -> . empty
+    (12) rules -> . rules lhs : tree = INT cost ; 
+
+    (13) rules -> . rules 
+
+    (14) rules -> . rules error 
+
+    (21) empty -> .
+
+    
+               reduce using rule 21 (empty -> .)
+    error           reduce using rule 21 (empty -> .)
+    ID              reduce using rule 21 (empty -> .)
+    $end            reduce using rule 21 (empty -> .)
+
+    rules                          shift and go to state 10
+    empty                          shift and go to state 11
+
+state 5
+
+    (4) decls -> decls decl .
+
+    PPERCENT        reduce using rule 4 (decls -> decls decl .)
+    TERMINAL        reduce using rule 4 (decls -> decls decl .)
+    START           reduce using rule 4 (decls -> decls decl .)
+    
+               reduce using rule 4 (decls -> decls decl .)
+    error           reduce using rule 4 (decls -> decls decl .)
+    $end            reduce using rule 4 (decls -> decls decl .)
+
+
+state 6
+
+    (5) decl -> TERMINAL . blist 
+
+    (9) blist -> . empty
+    (10) blist -> . blist ID = INT
+    (21) empty -> .
+
+    
+               reduce using rule 21 (empty -> .)
+    ID              reduce using rule 21 (empty -> .)
+
+    blist                          shift and go to state 12
+    empty                          shift and go to state 13
+
+state 7
+
+    (7) decl -> 
+ .
+
+    PPERCENT        reduce using rule 7 (decl -> 
+ .)
+    TERMINAL        reduce using rule 7 (decl -> 
+ .)
+    START           reduce using rule 7 (decl -> 
+ .)
+    
+               reduce using rule 7 (decl -> 
+ .)
+    error           reduce using rule 7 (decl -> 
+ .)
+    $end            reduce using rule 7 (decl -> 
+ .)
+
+
+state 8
+
+    (6) decl -> START . lhs 
+
+    (15) lhs -> . ID
+
+    ID              shift and go to state 15
+
+    lhs                            shift and go to state 14
+
+state 9
+
+    (8) decl -> error . 
+
+
+    
+               shift and go to state 16
+
+
+state 10
+
+    (1) spec -> decls PPERCENT rules .
+    (12) rules -> rules . lhs : tree = INT cost ; 
+
+    (13) rules -> rules . 
+
+    (14) rules -> rules . error 
+
+    (15) lhs -> . ID
+
+    $end            reduce using rule 1 (spec -> decls PPERCENT rules .)
+    
+               shift and go to state 18
+    error           shift and go to state 19
+    ID              shift and go to state 15
+
+    lhs                            shift and go to state 17
+
+state 11
+
+    (11) rules -> empty .
+
+    
+               reduce using rule 11 (rules -> empty .)
+    error           reduce using rule 11 (rules -> empty .)
+    ID              reduce using rule 11 (rules -> empty .)
+    $end            reduce using rule 11 (rules -> empty .)
+
+
+state 12
+
+    (5) decl -> TERMINAL blist . 
+
+    (10) blist -> blist . ID = INT
+
+    
+               shift and go to state 20
+    ID              shift and go to state 21
+
+
+state 13
+
+    (9) blist -> empty .
+
+    
+               reduce using rule 9 (blist -> empty .)
+    ID              reduce using rule 9 (blist -> empty .)
+
+
+state 14
+
+    (6) decl -> START lhs . 
+
+
+    
+               shift and go to state 22
+
+
+state 15
+
+    (15) lhs -> ID .
+
+    
+               reduce using rule 15 (lhs -> ID .)
+    :               reduce using rule 15 (lhs -> ID .)
+
+
+state 16
+
+    (8) decl -> error 
+ .
+
+    PPERCENT        reduce using rule 8 (decl -> error 
+ .)
+    TERMINAL        reduce using rule 8 (decl -> error 
+ .)
+    START           reduce using rule 8 (decl -> error 
+ .)
+    
+               reduce using rule 8 (decl -> error 
+ .)
+    error           reduce using rule 8 (decl -> error 
+ .)
+    $end            reduce using rule 8 (decl -> error 
+ .)
+
+
+state 17
+
+    (12) rules -> rules lhs . : tree = INT cost ; 
+
+
+    :               shift and go to state 23
+
+
+state 18
+
+    (13) rules -> rules 
+ .
+
+    
+               reduce using rule 13 (rules -> rules 
+ .)
+    error           reduce using rule 13 (rules -> rules 
+ .)
+    ID              reduce using rule 13 (rules -> rules 
+ .)
+    $end            reduce using rule 13 (rules -> rules 
+ .)
+
+
+state 19
+
+    (14) rules -> rules error . 
+
+
+    
+               shift and go to state 24
+
+
+state 20
+
+    (5) decl -> TERMINAL blist 
+ .
+
+    PPERCENT        reduce using rule 5 (decl -> TERMINAL blist 
+ .)
+    TERMINAL        reduce using rule 5 (decl -> TERMINAL blist 
+ .)
+    START           reduce using rule 5 (decl -> TERMINAL blist 
+ .)
+    
+               reduce using rule 5 (decl -> TERMINAL blist 
+ .)
+    error           reduce using rule 5 (decl -> TERMINAL blist 
+ .)
+    $end            reduce using rule 5 (decl -> TERMINAL blist 
+ .)
+
+
+state 21
+
+    (10) blist -> blist ID . = INT
+
+    =               shift and go to state 25
+
+
+state 22
+
+    (6) decl -> START lhs 
+ .
+
+    PPERCENT        reduce using rule 6 (decl -> START lhs 
+ .)
+    TERMINAL        reduce using rule 6 (decl -> START lhs 
+ .)
+    START           reduce using rule 6 (decl -> START lhs 
+ .)
+    
+               reduce using rule 6 (decl -> START lhs 
+ .)
+    error           reduce using rule 6 (decl -> START lhs 
+ .)
+    $end            reduce using rule 6 (decl -> START lhs 
+ .)
+
+
+state 23
+
+    (12) rules -> rules lhs : . tree = INT cost ; 
+
+    (16) tree -> . ID
+    (17) tree -> . ID ( tree )
+    (18) tree -> . ID ( tree , tree )
+
+    ID              shift and go to state 27
+
+    tree                           shift and go to state 26
+
+state 24
+
+    (14) rules -> rules error 
+ .
+
+    
+               reduce using rule 14 (rules -> rules error 
+ .)
+    error           reduce using rule 14 (rules -> rules error 
+ .)
+    ID              reduce using rule 14 (rules -> rules error 
+ .)
+    $end            reduce using rule 14 (rules -> rules error 
+ .)
+
+
+state 25
+
+    (10) blist -> blist ID = . INT
+
+    INT             shift and go to state 28
+
+
+state 26
+
+    (12) rules -> rules lhs : tree . = INT cost ; 
+
+
+    =               shift and go to state 29
+
+
+state 27
+
+    (16) tree -> ID .
+    (17) tree -> ID . ( tree )
+    (18) tree -> ID . ( tree , tree )
+
+    =               reduce using rule 16 (tree -> ID .)
+    )               reduce using rule 16 (tree -> ID .)
+    ,               reduce using rule 16 (tree -> ID .)
+    (               shift and go to state 30
+
+
+state 28
+
+    (10) blist -> blist ID = INT .
+
+    
+               reduce using rule 10 (blist -> blist ID = INT .)
+    ID              reduce using rule 10 (blist -> blist ID = INT .)
+
+
+state 29
+
+    (12) rules -> rules lhs : tree = . INT cost ; 
+
+
+    INT             shift and go to state 31
+
+
+state 30
+
+    (17) tree -> ID ( . tree )
+    (18) tree -> ID ( . tree , tree )
+    (16) tree -> . ID
+    (17) tree -> . ID ( tree )
+    (18) tree -> . ID ( tree , tree )
+
+    ID              shift and go to state 27
+
+    tree                           shift and go to state 32
+
+state 31
+
+    (12) rules -> rules lhs : tree = INT . cost ; 
+
+    (19) cost -> . empty
+    (20) cost -> . ( INT )
+    (21) empty -> .
+
+    (               shift and go to state 35
+    ;               reduce using rule 21 (empty -> .)
+
+    cost                           shift and go to state 33
+    empty                          shift and go to state 34
+
+state 32
+
+    (17) tree -> ID ( tree . )
+    (18) tree -> ID ( tree . , tree )
+
+    )               shift and go to state 36
+    ,               shift and go to state 37
+
+
+state 33
+
+    (12) rules -> rules lhs : tree = INT cost . ; 
+
+
+    ;               shift and go to state 38
+
+
+state 34
+
+    (19) cost -> empty .
+
+    ;               reduce using rule 19 (cost -> empty .)
+
+
+state 35
+
+    (20) cost -> ( . INT )
+
+    INT             shift and go to state 39
+
+
+state 36
+
+    (17) tree -> ID ( tree ) .
+
+    =               reduce using rule 17 (tree -> ID ( tree ) .)
+    )               reduce using rule 17 (tree -> ID ( tree ) .)
+    ,               reduce using rule 17 (tree -> ID ( tree ) .)
+
+
+state 37
+
+    (18) tree -> ID ( tree , . tree )
+    (16) tree -> . ID
+    (17) tree -> . ID ( tree )
+    (18) tree -> . ID ( tree , tree )
+
+    ID              shift and go to state 27
+
+    tree                           shift and go to state 40
+
+state 38
+
+    (12) rules -> rules lhs : tree = INT cost ; . 
+
+
+    
+               shift and go to state 41
+
+
+state 39
+
+    (20) cost -> ( INT . )
+
+    )               shift and go to state 42
+
+
+state 40
+
+    (18) tree -> ID ( tree , tree . )
+
+    )               shift and go to state 43
+
+
+state 41
+
+    (12) rules -> rules lhs : tree = INT cost ; 
+ .
+
+    
+               reduce using rule 12 (rules -> rules lhs : tree = INT cost ; 
+ .)
+    error           reduce using rule 12 (rules -> rules lhs : tree = INT cost ; 
+ .)
+    ID              reduce using rule 12 (rules -> rules lhs : tree = INT cost ; 
+ .)
+    $end            reduce using rule 12 (rules -> rules lhs : tree = INT cost ; 
+ .)
+
+
+state 42
+
+    (20) cost -> ( INT ) .
+
+    ;               reduce using rule 20 (cost -> ( INT ) .)
+
+
+state 43
+
+    (18) tree -> ID ( tree , tree ) .
+
+    =               reduce using rule 18 (tree -> ID ( tree , tree ) .)
+    )               reduce using rule 18 (tree -> ID ( tree , tree ) .)
+    ,               reduce using rule 18 (tree -> ID ( tree , tree ) .)
+
