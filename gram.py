@@ -99,17 +99,21 @@ def p_lhs(p):
 	p[0] = p[1]
 	nonterm(p[1])
 
+def p_treelist1(p):
+	"treelist : treelist ',' tree"
+	p[0] = p[1]+ [p[3]]
+
+def p_treelist2(p):
+	"treelist : tree"
+	p[0] = [p[1]]
+
 def p_tree1(p):
 	"tree : ID"
-	p[0] = tree(p[1], None, None)
+	p[0] = tree(p[1], [])
 
 def p_tree2(p):
-	"tree : ID '(' tree ')'"
-	p[0] = tree(p[1], p[3], None)
-
-def p_tree3(p):
-	"tree : ID '(' tree ',' tree ')'"
-	p[0] = tree(p[1], p[3], p[5])
+	"tree : ID '(' treelist ')'"
+	p[0] = tree(p[1], p[3])
 
 def p_cost1(p):
 	"cost : empty"

@@ -1,0 +1,59 @@
+%term SUM=1 MOVE=2 CONST=3
+%%
+start:  SUM(a,a) = 1;
+start:  SUM(b,b) = 2;
+start:  SUM(a,b) = 7;
+start:  SUM(b,a) = 8;
+
+a:  MOVE(a) = 3 (3);
+b:  MOVE(b) = 4 (1);
+
+a: CONST = 5 (1);
+b: CONST = 6 (2);
+
+%%
+
+SUM=1
+MOVE=2
+CONST=3
+
+
+"""initializes tree required for labelling from user defined ast tree
+user defined ast tree class must contain functions getValue()and getChildren() which return
+    value of the root of the tree and the list of children trees respectively"""
+def initializeNode(P):
+    node = Node(P.getValue())
+    for child in P.getChildren():
+        node.children.append(initialize(child))
+    return node
+
+
+def dumpcover(p, goalnt, indent):
+    rule = getrule(p, goalnt)
+    sys.stdout.write("\t"*indent)
+    sys.stdout.write("%s\n"% rule.value)
+
+    for kid, nt in getmatchedkids(p, rule):
+        dumpcover(kid, nt, indent + 1)
+
+
+def tree(value, l=None, r=None):
+    p = Node()
+    p.value = value
+    if l: p.children.append(l)
+    if r: p.children.append(r)
+    return p
+
+
+def main():
+    p = tree(SUM,
+            tree(CONST, 0, 0),
+            tree(MOVE,tree(CONST,0,0),0)
+            );
+    p.label()
+    dumpcover(p, 0, 0)
+    return 0;
+
+if __name__== "__main__":
+    main()
+

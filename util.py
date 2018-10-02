@@ -21,8 +21,7 @@ class Nonterm:	# non-terminals:
 class Tree:			# tree patterns:
 	def __init__(self):
 		self.op = None;			# a terminal or non-terminal
-		self.left = None;		# operands
-		self.right = None;		# operands
+		self.children = [];		# operands
 		self.nterms = 0;		# number of terminal nodes in this tree
 
 class Rule:		# rules:

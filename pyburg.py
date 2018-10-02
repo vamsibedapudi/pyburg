@@ -154,13 +154,10 @@ def nonterm(name):
 	nts.append(p)
 	return p
 
-def tree(name,left=None,right=None):
+def tree(name,children):
 	"""create & initialize a tree node with the given fields"""
-	arity = 0
-	if left :
-		arity += 1
-	if right:
-		arity += 1
+	arity = len(children)
+
 	if not declared(name):
 		if arity > 0:
 			yyerror("undefined terminal '%s'", name)
@@ -178,14 +175,11 @@ def tree(name,left=None,right=None):
 		yyerror("inconsistent arity for terminal '%s'", name)
 	t = Tree()
 	t.op = p
-	t.left = left
-	t.right = right
+	t.children = children
 
 	t.nterms = (p.kind == TERM)
-	if left is not None:
-		t.nterms += left.nterms
-	if right is not None:
-		t.nterms += right.nterms
+	for child in children:
+		t.nterms += child.nterms
 
 	return t
 
@@ -204,7 +198,7 @@ def rule(lhs,rhs,ern,cost):
 
 	if (p.kind == TERM):
 		p.rules.append(r)
-	elif (p.kind == NONTERM and rhs.left is None and rhs.right is None):
+	elif (p.kind == NONTERM and len(rhs.children)==0):
 		p.chain.append(r)
 	for rule in rules:
 		if (rule.ern == r.ern):
@@ -214,11 +208,13 @@ def rule(lhs,rhs,ern,cost):
 
 def printf(msg, *args):
 	"""prints formatted output"""
+	# print(msg)
 	class Count:
 		counter=-1
 	counter = Count()
 	def getArg(counter = counter):
 		counter.counter += 1
+		# print(counter.counter)
 		return args[counter.counter]
 	i=0
 	while i < len(msg):
@@ -234,10 +230,11 @@ def printf(msg, *args):
 			elif msg[i] == 'T':
 				t = getArg()
 				printf("~S", t.op)
-				if (t.left and t.right):
-					printf("(~T,~T)", t.left, t.right)
-				elif (t.left):
-					printf("(~T)", t.left)
+				if len(t.children)>0:
+					printf("(~T", t.children[0])
+					for j in range(1,len(t.children)):
+						printf(",~T", t.children[j])
+					printf(")")
 
 			elif msg[i] == 'R':
 				r = getArg()
@@ -262,11 +259,8 @@ def reach(t):
 	if p.kind == NONTERM:
 		if not p.reached:
 			ckreach(p)
-	if t.left:
-		reach(t.left)
-	if t.right:
-		reach(t.right)
-
+	for child in t.children:
+		reach(child)
 
 def ckreach(p):
 	"""mark all non-terminals reachable from p"""
@@ -287,7 +281,7 @@ except NameError:
 	trace
 except NameError:
 	def trace(p, rule, cost, bestcost):
-		sys.stdout.write("%s matched %s with cost %d vs. %d\\n" % (p,rule.name, cost, bestcost))\n\n''')
+		sys.stdout.write("%s matched %s with cost %d vs. %d\\n" % (p,rule.value, cost, bestcost))\n\n''')
 
 def emitdefs():
 	"""emit non-terminal defines and data structures"""
@@ -322,9 +316,9 @@ def computents(t):
 		p = t.op;
 		if p.kind == NONTERM:
 			ret += "%s_NT, "%(p.name)
-		ret += computents(t.left)
-		ret += computents(t.right)
-	return ret;
+		for child in t.children:
+			ret += computents(child)
+	return ret
 
 def emitrules():
 	printf('''class Rule:
@@ -371,7 +365,7 @@ def emitnode():
 
 def emitrecord(prefix, r, cost):
 	"""emit code that tests for a winning match of rule r"""
-	if Tflag: printf("~s~Ptrace(self, ~d, cost + ~d, p.cost[~P~S_NT])\n",prefix, r.ern, cost, r.lhs)
+	if Tflag: printf("~s~Ptrace(self, rules[~d], cost + ~d, self.cost[~P~S_NT])\n",prefix, r.ern, cost, r.lhs)
 
 	printf("~sif (", prefix);
 
@@ -401,9 +395,6 @@ def emitstate():
 
 
 
-
-
-
 def emitcase(p):
 	"""emit one case in function state"""
 	if p.kind==NONTERM:
@@ -414,29 +405,25 @@ def emitcase(p):
 
 	printf('''\n~3assert len(self.children) == ~d, " Invalid arity supplied to %d"%self.value\n''', p.arity)
 	if p.arity == 0 or p.arity == -1: pass
-	elif p.arity==1:
-		printf('''~3l = self.children[0]
-			assert l, "Left Child is None for %d"%self.value\n''')
-	elif p.arity==2:
-		printf('''~3l = self.children[0]
-			assert l, "Left Child is None for %d"%self.value\n''')
-		printf('''~3r = self.children[1]
-			assert r, "Right Child is None for %d"%self.value\n''')
-	else: print("Arity exceeds for ~S",p)
+	else:
+		for i in range(0,p.arity):
+			printf('''~3assert self.children[~d], "self.children[~d] is None for %d"%self.value\n''',i,i)
 	printf("\n")
 
 	for r in reversed(p.rules):
 		if r.rhs.nterms <= 1:
 			printf("~3if (~1# ~R\n", r);
-			printf("~5True # No terminals\n")
+			printf("~5True # No terminal checks\n")
 			printf("~4):\n\n~4cost = ");
 		else:
 			printf("~3if (~1# ~R\n", r);
-			if r.rhs.left: emittest(r.rhs.left, "self.children[0]", "and" if r.rhs.right and r.rhs.right.nterms else "");
-			if r.rhs.right: emittest(r.rhs.right, "self.children[1]", "");
+			if len(r.rhs.children)>0:
+				for i in range(0,len(r.rhs.children)-1):
+					emittest(r.rhs.children[i], "self.children[%d]"%i, "and" if r.rhs.children[i+1] and r.rhs.children[i+1].nterms else "");
+				emittest(r.rhs.children[len(r.rhs.children)-1], "self.children[%d]"%(len(r.rhs.children)-1), "");
 			printf("~4):\n\n~4cost = ");
-		if r.rhs.left: emitcost(r.rhs.left,  "l");
-		if r.rhs.right: emitcost(r.rhs.right,  "r");
+		for i in range(0,len(r.rhs.children)):
+			 emitcost(r.rhs.children[i],  "self.children[%d]"%i);
 		printf("~d;\n", r.cost);
 		emitrecord("\t\t\t\t", r, 0);
 
@@ -445,10 +432,8 @@ def emitcost(t, v):
 	"""emit cost computation for tree t"""
 	p = t.op
 	if p.kind == TERM:
-		if t.left:
-			emitcost(t.left, "%s.children[0]" %  v)
-		if t.right:
-			emitcost(t.right, "%s.children[0]" % v)
+		for i in range(0,len(t.children)):
+			emitcost(t.children[i], "%s.children[%d]" % (v,i))
 	else:
 		printf("~s.cost[~P~S_NT] + ", v, p)
 
@@ -462,8 +447,10 @@ def emittest(t, v, suffix):
 	p = t.op
 	if p.kind == TERM:
 		printf("~5~s.value == ~d ~s # ~S\n", v, p.esn, "and" if t.nterms>1 else suffix, p);
-		if t.left: emittest(t.left,"%s.children[0]"%v, "and" if t.right and t.right.nterms else suffix)
-		if t.right: emittest(t.right,"%s.children[1]"%v, suffix)
+		if len(t.children)>0:
+			for i in range(0,len(t.children)-1):
+				emittest(t.children[i],"%s.children[%d]"%(v,i), "and" if t.children[i+1] and t.children[i+1].nterms else suffix)
+			emittest(t.children[len(t.children)-1],"%s.children[%d]"%(v,len(t.children)-1), suffix)
 
 
 
@@ -496,9 +483,8 @@ def computekids(t, v, kidnum):
 		ret += "\t\tkids.append((%s, rule.nts[%d]));\n"% (v, kidnum.count)
 		kidnum.count+=1
 	elif p.arity > 0:
-		ret += computekids(t.left, "%s.children[0]" % v, kidnum);
-		if p.arity == 2:
-			ret += computekids(t.right, "%s.children[1]" % v, kidnum)
+		for i in range(0,len(t.children)):
+			ret += computekids(t.children[i], "%s.children[%d]" % (v,i), kidnum);
 	return ret
 
 def emitkids():

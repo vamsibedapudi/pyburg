@@ -1,6 +1,9 @@
 # python Cache
 .pyc
 
+#todos
+todos
+
 # ply cache files
 parser.out
 parsetab.py
@@ -116,3 +119,4 @@ venv.bak/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+
